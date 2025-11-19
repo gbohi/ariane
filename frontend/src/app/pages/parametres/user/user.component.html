@@ -1,0 +1,328 @@
+<!-- Start Breadcrumbs -->
+<app-breadcrumbs title="User List" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+<!-- End Breadcrumbs -->
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card" id="userList">
+            <div class="card-header">
+                <div class="row align-items-center gy-3">
+                    <div class="col-lg-3 col-md-6 order-last order-md-first me-auto">
+                        <div class="search-box">
+                            <input type="text" class="form-control search" placeholder="Rechercher par libellé ou ID..." [(ngModel)]="term" (keyup)="filterdata()">
+                            <i class="ri-search-line search-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-auto col-6 text-end">
+                        <div class="d-flex flex-wrap align-items-start gap-2">
+                            <button class="btn btn-subtle-danger" [class.d-none]="checkedValGet.length === 0" id="remove-actions" (click)="deleteRecordModal?.show()">
+                                <i class="ri-delete-bin-2-line"></i> Supprimer ({{checkedValGet.length}})
+                            </button>
+                            <button class="btn btn-secondary" (click)="addUser?.show()"><i class="bi bi-person-plus align-baseline me-1"></i> Ajouter un utilisateur</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-borderless table-centered align-middle table-nowrap mb-0">
+                        <thead class="text-muted table-light">
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="option" id="checkAll" [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">
+                                        <label class="form-check-label" for="checkAll"></label>
+                                    </div>
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('id')">#
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('username')">username</th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('email')">email</th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('nom')">nom</th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('prenom')">prenom</th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('contact')">contact</th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('poste_telephone')">Téléphone</th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('statut')">statut</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="list form-check-all">
+                            @for (data of users; track data.id) {
+                            <tr id="l_{{data.id}}">
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="checkAll" value="{{data.id}}" [(ngModel)]="data.state" (change)="onCheckboxChange($event)" />
+                                        <label class="form-check-label"></label>
+                                    </div>
+                                </td>
+                                <td class="user_id"><a href="javascript:void(0);" class="fw-medium link-primary">#{{data.id}}</a></td>
+                               
+                                <td class="libelle">{{data.username}}</td>
+                                <td class="libelle">{{data.email}}</td>
+                                <td class="libelle">{{data.nom}}</td>
+                                <td class="libelle">{{data.prenom}}</td>
+                                <td class="libelle">{{data.contact}}</td>
+                                <td class="libelle">{{data.poste_telephone}}</td>
+                                <td class="libelle">{{data.statut}}</td>
+                                
+                                <td>
+                                    <ul class="d-flex gap-2 list-unstyled mb-0">
+                                        <li>
+                                            <a href="javascript:void(0);" (click)="viewDetails(data.id)" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
+                                        </li>
+                                        <li>
+                                            <a href="javascript:void(0);" (click)="editList($index)" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
+                                        </li>
+                                        <li>
+                                            <a href="javascript:void(0);" (click)="removeItem(data.id)" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
+                                        </li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            }
+                            
+                            <!-- Message si aucun résultat -->
+                            <tr *ngIf="users?.length === 0 && !term && !isLoading">
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="ph-file-x fs-1 text-primary"></i>
+                                    <h5 class="mt-2">Aucun utilisateur disponible</h5>
+                                    <p class="text-muted mb-0">Veuillez ajouter un utilisateur pour commencer.</p>
+                                </td>
+                            </tr>
+                        </tbody><!-- end tbody -->
+                    </table><!-- end table -->
+
+                    <div id="elmLoader" *ngIf="isLoading">
+                        <div class="spinner-border text-primary avatar-sm" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+
+                    <div class="noresult" style="display: none;">
+                        <div class="text-center py-4">
+                            <i class="ph-magnifying-glass fs-1 text-primary"></i>
+                            <h5 class="mt-2">Aucun résultat trouvé</h5>
+                            <p class="text-muted mb-0">Nous n'avons trouvé aucun utilisateur correspondant à votre recherche.</p>
+                        </div>
+                    </div>
+                </div>
+                <div [ngClass]="(users.length == 0)?'d-none':''" class="row mt-3 align-items-center" id="pagination-element">
+                    <div class="col-sm">
+                        <div class="text-muted text-center text-sm-start">
+                            Affichage de <span class="fw-semibold">{{users.length || 0}}</span> sur <span class="fw-semibold">{{totalItems || 0}}</span> résultats
+                        </div>
+                    </div><!--end col-->
+                    <div class="col-sm-auto mt-3 mt-sm-0">
+                        <pagination 
+                            class="pagination-wrap justify-content-center hstack gap-2" 
+                            [totalItems]="totalItems" 
+                            [itemsPerPage]="10" 
+                            [(ngModel)]="currentPage" 
+                            (pageChanged)="pageChanged($event)">
+                        </pagination>
+                    </div><!--end col-->
+                </div><!--end row-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter/Modifier -->
+<div bsModal #addUser="bs-modal" class="modal fade" id="addUser" [config]="{backdrop: 'static', keyboard: false, ignoreBackdropClick: true}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">Ajouter un utilisateur</h5>
+                <button type="button" class="btn-close" (click)="closeAddModal()"></button>
+            </div>
+
+            <form (ngSubmit)="saveProperty()" [formGroup]="userForm" class="tablelist-form" novalidate autocomplete="off">
+                <div class="modal-body">
+                    <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+                    <input type="hidden" id="id-field" formControlName="id">
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">Username<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="username" id="libelle-input" placeholder="Entrez le username" required>
+                                <div *ngIf="userForm.get('username')?.invalid && userForm.get('username')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('username')?.errors?.['required']">Le mot de passe est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">E-mail<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="email" id="libelle-input" placeholder="Entrez le email" required>
+                                <div *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('email')?.errors?.['required']">Le e-mail est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">Nom<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="nom" id="libelle-input" placeholder="Entrez le nom" required>
+                                <div *ngIf="userForm.get('nom')?.invalid && userForm.get('nom')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('nom')?.errors?.['required']">Le nom est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">Prénom<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="prenom" id="libelle-input" placeholder="Entrez le prénom" required>
+                                <div *ngIf="userForm.get('prenom')?.invalid && userForm.get('prenom')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('prenom')?.errors?.['required']">Le prénom est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">Contact<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="contact" id="libelle-input" placeholder="Entrez le contact" required>
+                                <div *ngIf="userForm.get('contact')?.invalid && userForm.get('contact')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('contact')?.errors?.['required']">Le contact est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">Téléphone<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="poste_telephone" id="libelle-input" placeholder="Entrez le numero poste telephone" required>
+                                <div *ngIf="userForm.get('poste_telephone')?.invalid && userForm.get('poste_telephone')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('poste_telephone')?.errors?.['required']">Le numero de poste telephone est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">Mot de passe<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="password" id="libelle-input" placeholder="Entrez le mot de passe" required>
+                                <div *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('password')?.errors?.['required']">Le mot de passe est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">Confirmez le mot de passe<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="password2" id="libelle-input" placeholder="Entrez à nouveau le mot de passe" required>
+                                <div *ngIf="userForm.get('password2')?.invalid && userForm.get('password2')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('password2')?.errors?.['required']">Le mot de passe est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="libelle-input" class="form-label">Statut<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" formControlName="statut" id="libelle-input" placeholder="Entrez le statut" required>
+                                <div *ngIf="userForm.get('statut')?.invalid && userForm.get('statut')?.touched" class="text-danger mt-1">
+                                    <small *ngIf="userForm.get('statut')?.errors?.['required']">Le statut est requis</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="date-input">
+                </div>
+                <div class="modal-footer">
+                    <div class="hstack gap-2 justify-content-end">
+                        <button type="button" class="btn btn-ghost-danger" (click)="closeAddModal()"><i class="bi bi-x-lg align-baseline me-1"></i> Fermer</button>
+                        <button type="submit" class="btn btn-primary" id="add-btn" [disabled]="userForm.invalid">Ajouter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <!-- modal-content -->
+    </div>
+</div><!--end add Property modal-->
+
+<!-- deleteRecordModal -->
+<div bsModal #deleteRecordModal="bs-modal" id="deleteRecordModal" class="modal fade zoomIn" [config]="{backdrop: 'static', keyboard: false, ignoreBackdropClick: true}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" id="deleteRecord-close" (click)="deleteRecordModal?.hide()"></button>
+            </div>
+            <div class="modal-body p-md-5">
+                <div class="text-center">
+                    <div class="text-danger">
+                        <i class="bi bi-trash display-5"></i>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="mb-2">Êtes-vous sûr ?</h4>
+                        <p class="text-muted fs-md mx-3 mb-0">Voulez-vous vraiment supprimer {{ (checkedValGet && checkedValGet.length > 1) ? 'ces utilisateurs' : 'cet utilisateur' }} ?</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-center mt-4 pt-2 mb-2">
+                    <button type="button" class="btn w-sm btn-light btn-hover" (click)="deleteRecordModal?.hide()">Annuler</button>
+                    <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record" (click)="confirmDelete(deleteID)">Oui, supprimer</button>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /deleteRecordModal -->
+
+<!-- Modal Détails -->
+<div bsModal #viewUser="bs-modal" class="modal fade" id="viewUser" 
+     [config]="{backdrop: 'static', keyboard: false, ignoreBackdropClick: true}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewUserModalLabel">Détails de l'utilisateur</h5>
+                <button type="button" class="btn-close" (click)="closeViewModal()"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <p><label class="form-label fw-medium">ID:</label>
+                    {{selectedUser?.id}}</p>
+                </div>
+                <div class="mb-3">
+                    <p><label class="form-label fw-medium">username:</label>
+                    {{selectedUser?.username}}</p>
+                </div>
+                <div class="mb-3">
+                    <p><label class="form-label fw-medium">email:</label>
+                    {{selectedUser?.email}}</p>
+                </div>
+                <div class="mb-3">
+                    <p><label class="form-label fw-medium">nom:</label>
+                    {{selectedUser?.nom}}</p>
+                </div>
+                <div class="mb-3">
+                    <p><label class="form-label fw-medium">prenom:</label>
+                    {{selectedUser?.prenom}}</p>
+                </div>
+                <div class="mb-3">
+                    <p><label class="form-label fw-medium">contact:</label>
+                    {{selectedUser?.contact}}</p>
+                </div>
+                <div class="mb-3">
+                    <p><label class="form-label fw-medium">Téléphone:</label>
+                    {{selectedUser?.poste_telephone}}</p>
+                </div>
+                <!-- Ajoutez d'autres champs si nécessaire -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="closeViewModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
